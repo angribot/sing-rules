@@ -196,7 +196,7 @@ def is_logical_rule(rule: dict[str, Any]) -> bool:
     return rule.get("type") == "logical"
 
 
-def is_aggregatable_simple_rule(rule: dict[str, Any]) -> bool:
+def is_mergeable_default_rule(rule: dict[str, Any]) -> bool:
     return not is_logical_rule(rule) and "invert" not in rule and len(rule) == 1
 
 
@@ -241,9 +241,9 @@ def normalize_simple_rule(rule: dict[str, Any]) -> dict[str, Any]:
     return normalized_rule
 
 
-def aggregate_simple_rules(simple_rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def aggregate_simple_rules(mergeable_rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
     grouped_values: dict[str, list[Any]] = {}
-    for rule in simple_rules:
+    for rule in mergeable_rules:
         field, values = next(iter(rule.items()))
         grouped_values.setdefault(field, []).extend(values)
 
@@ -306,9 +306,9 @@ def normalize_logical_rule(rule: dict[str, Any]) -> dict[str, Any]:
     normalized_children = [normalize_rule(child) for child in rule["rules"]]
 
     if mode == "or":
-        simple_children = [child for child in normalized_children if is_aggregatable_simple_rule(child)]
-        remaining_children = [child for child in normalized_children if not is_aggregatable_simple_rule(child)]
-        children = aggregate_simple_rules(simple_children) + sorted(
+        mergeable_children = [child for child in normalized_children if is_mergeable_default_rule(child)]
+        remaining_children = [child for child in normalized_children if not is_mergeable_default_rule(child)]
+        children = aggregate_simple_rules(mergeable_children) + sorted(
             deduplicate_rules(remaining_children), key=rule_sort_key
         )
     else:
@@ -322,9 +322,9 @@ def normalize_logical_rule(rule: dict[str, Any]) -> dict[str, Any]:
 
 def normalize_top_level_rules(rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
     normalized_rules = [normalize_rule(rule) for rule in rules]
-    simple_rules = [rule for rule in normalized_rules if is_aggregatable_simple_rule(rule)]
-    remaining_rules = [rule for rule in normalized_rules if not is_aggregatable_simple_rule(rule)]
-    return aggregate_simple_rules(simple_rules) + sorted(deduplicate_rules(remaining_rules), key=rule_sort_key)
+    mergeable_rules = [rule for rule in normalized_rules if is_mergeable_default_rule(rule)]
+    remaining_rules = [rule for rule in normalized_rules if not is_mergeable_default_rule(rule)]
+    return aggregate_simple_rules(mergeable_rules) + sorted(deduplicate_rules(remaining_rules), key=rule_sort_key)
 
 
 def extract_rule_type(expression: str) -> str:
