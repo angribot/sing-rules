@@ -55,11 +55,6 @@ SIMPLE_FIELD_ORDER = {
 SIMPLE_FIELD_OR_GROUPS = (
     ("domain", "domain_suffix", "domain_keyword", "domain_regex", "ip_cidr"),
 )
-LOGICAL_MODE_ORDER = {
-    "and": 70,
-    "or": 80,
-    "not": 90,
-}
 
 
 class ConversionError(ValueError):
@@ -183,11 +178,26 @@ def parse_logical_expression(mode: str, body: str) -> tuple[dict[str, Any], None
             raise ConversionError(f"Empty child rule in logical expression: {body}")
         rules.append(child_rule)
 
+    if mode == "not":
+        return toggle_rule_invert(rules[0]), None
     return {"type": "logical", "mode": mode, "rules": rules}, None
 
 
+def toggle_rule_invert(rule: dict[str, Any]) -> dict[str, Any]:
+    inverted_rule = dict(rule)
+    if inverted_rule.get("invert"):
+        del inverted_rule["invert"]
+    else:
+        inverted_rule["invert"] = True
+    return inverted_rule
+
+
+def is_logical_rule(rule: dict[str, Any]) -> bool:
+    return rule.get("type") == "logical"
+
+
 def is_aggregatable_simple_rule(rule: dict[str, Any]) -> bool:
-    return "type" not in rule and len(rule) == 1
+    return not is_logical_rule(rule) and "invert" not in rule and len(rule) == 1
 
 
 def string_sort_key(value: str) -> str:
@@ -224,8 +234,11 @@ def sort_grouped_values(field: str, values: list[Any]) -> list[Any]:
 
 
 def normalize_simple_rule(rule: dict[str, Any]) -> dict[str, Any]:
-    field, values = next(iter(rule.items()))
-    return {field: sort_grouped_values(field, values)}
+    field = next(field for field in rule if field != "invert")
+    normalized_rule = {field: sort_grouped_values(field, rule[field])}
+    if rule.get("invert"):
+        normalized_rule["invert"] = True
+    return normalized_rule
 
 
 def aggregate_simple_rules(simple_rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -271,40 +284,47 @@ def deduplicate_rules(rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return unique_rules
 
 
-def simple_rule_sort_key(rule: dict[str, Any]) -> tuple[int, str]:
-    field = next(iter(rule))
-    return (SIMPLE_FIELD_ORDER.get(field, 999), serialize_rule(rule))
-
-
-def logical_rule_sort_key(rule: dict[str, Any]) -> tuple[int, str]:
-    return (LOGICAL_MODE_ORDER.get(rule["mode"], 999), serialize_rule(rule))
+def rule_sort_key(rule: dict[str, Any]) -> tuple[int, str]:
+    if rule.get("invert"):
+        order = RULE_TYPE_ORDER["NOT"]
+    elif is_logical_rule(rule):
+        order = RULE_TYPE_ORDER.get(rule["mode"].upper(), 999)
+    else:
+        field = next(field for field in rule if field != "invert")
+        order = SIMPLE_FIELD_ORDER.get(field, 999)
+    return (order, serialize_rule(rule))
 
 
 def normalize_rule(rule: dict[str, Any]) -> dict[str, Any]:
-    if is_aggregatable_simple_rule(rule):
-        return normalize_simple_rule(rule)
-    return normalize_logical_rule(rule)
+    if is_logical_rule(rule):
+        return normalize_logical_rule(rule)
+    return normalize_simple_rule(rule)
 
 
 def normalize_logical_rule(rule: dict[str, Any]) -> dict[str, Any]:
     mode = rule["mode"]
     normalized_children = [normalize_rule(child) for child in rule["rules"]]
-    simple_children = [child for child in normalized_children if is_aggregatable_simple_rule(child)]
-    logical_children = [child for child in normalized_children if not is_aggregatable_simple_rule(child)]
 
     if mode == "or":
-        children = aggregate_simple_rules(simple_children) + sorted(deduplicate_rules(logical_children), key=logical_rule_sort_key)
+        simple_children = [child for child in normalized_children if is_aggregatable_simple_rule(child)]
+        remaining_children = [child for child in normalized_children if not is_aggregatable_simple_rule(child)]
+        children = aggregate_simple_rules(simple_children) + sorted(
+            deduplicate_rules(remaining_children), key=rule_sort_key
+        )
     else:
-        children = sorted(deduplicate_rules(simple_children), key=simple_rule_sort_key) + sorted(deduplicate_rules(logical_children), key=logical_rule_sort_key)
+        children = sorted(deduplicate_rules(normalized_children), key=rule_sort_key)
 
-    return {"type": "logical", "mode": mode, "rules": children}
+    normalized_rule: dict[str, Any] = {"type": "logical", "mode": mode, "rules": children}
+    if rule.get("invert"):
+        normalized_rule["invert"] = True
+    return normalized_rule
 
 
 def normalize_top_level_rules(rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
     normalized_rules = [normalize_rule(rule) for rule in rules]
     simple_rules = [rule for rule in normalized_rules if is_aggregatable_simple_rule(rule)]
-    logical_rules = [rule for rule in normalized_rules if not is_aggregatable_simple_rule(rule)]
-    return aggregate_simple_rules(simple_rules) + sorted(deduplicate_rules(logical_rules), key=logical_rule_sort_key)
+    remaining_rules = [rule for rule in normalized_rules if not is_aggregatable_simple_rule(rule)]
+    return aggregate_simple_rules(simple_rules) + sorted(deduplicate_rules(remaining_rules), key=rule_sort_key)
 
 
 def extract_rule_type(expression: str) -> str:

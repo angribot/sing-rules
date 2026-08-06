@@ -166,15 +166,61 @@ class ConvertLsrContentTests(unittest.TestCase):
                         ],
                     },
                     {
-                        "type": "logical",
-                        "mode": "not",
-                        "rules": [
-                            {"domain": ["b.example.com"]},
-                        ],
+                        "domain": ["b.example.com"],
+                        "invert": True,
                     },
                 ],
             },
         )
+        self.assertEqual(unsupported, [])
+
+    def test_applies_not_inside_or_rule(self) -> None:
+        payload = "OR,((DOMAIN,included.example.com),(NOT,((DOMAIN,excluded.example.com))))\n"
+
+        rule_set, unsupported = convert_lsr_content(payload, source_name="Logical.lsr")
+
+        self.assertEqual(
+            rule_set["rules"],
+            [
+                {
+                    "type": "logical",
+                    "mode": "or",
+                    "rules": [
+                        {"domain": ["included.example.com"]},
+                        {"domain": ["excluded.example.com"], "invert": True},
+                    ],
+                }
+            ],
+        )
+        self.assertEqual(unsupported, [])
+
+    def test_applies_not_to_logical_rule(self) -> None:
+        payload = "NOT,((AND,((DOMAIN,b.example.com),(DOMAIN,a.example.com))))\n"
+
+        rule_set, unsupported = convert_lsr_content(payload, source_name="Logical.lsr")
+
+        self.assertEqual(
+            rule_set["rules"],
+            [
+                {
+                    "type": "logical",
+                    "mode": "and",
+                    "rules": [
+                        {"domain": ["a.example.com"]},
+                        {"domain": ["b.example.com"]},
+                    ],
+                    "invert": True,
+                }
+            ],
+        )
+        self.assertEqual(unsupported, [])
+
+    def test_cancels_double_logical_not(self) -> None:
+        payload = "NOT,((NOT,((DOMAIN,double.example.com))))\n"
+
+        rule_set, unsupported = convert_lsr_content(payload, source_name="Logical.lsr")
+
+        self.assertEqual(rule_set["rules"], [{"domain": ["double.example.com"]}])
         self.assertEqual(unsupported, [])
 
     def test_ignores_ip_asn_entries(self) -> None:
