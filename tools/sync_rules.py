@@ -389,11 +389,9 @@ def to_snake_case(name: str) -> str:
     return second_pass.replace("-", "_").lower()
 
 
-def compile_srs(sing_box_binary: Path, json_path: Path, srs_path: Path) -> None:
+def compile_srs(srs_compiler: Path, json_path: Path, srs_path: Path) -> None:
     command = [
-        str(sing_box_binary),
-        "rule-set",
-        "compile",
+        str(srs_compiler),
         "--output",
         str(srs_path),
         str(json_path),
@@ -410,13 +408,13 @@ def compile_srs(sing_box_binary: Path, json_path: Path, srs_path: Path) -> None:
 def generate_rule_artifacts(
     source_dir: Path,
     output_dir: Path,
-    sing_box_binary: Path,
+    srs_compiler: Path,
     manifest_name: str = DEFAULT_MANIFEST_NAME,
     clean: bool = False,
 ) -> GenerationResult:
     source_dir = source_dir.resolve()
     output_dir = output_dir.resolve()
-    sing_box_binary = sing_box_binary.resolve()
+    srs_compiler = srs_compiler.resolve()
 
     if clean:
         for path in load_previous_manifest(output_dir, manifest_name):
@@ -441,7 +439,7 @@ def generate_rule_artifacts(
         srs_path = output_dir / f"{stem}.srs"
 
         json_path.write_text(json.dumps(rule_set, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
-        compile_srs(sing_box_binary, json_path, srs_path)
+        compile_srs(srs_compiler, json_path, srs_path)
 
         generated_files.extend([json_path, srs_path])
 
@@ -453,7 +451,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Convert .lsr rules into sing-box JSON and SRS artifacts.")
     parser.add_argument("--source-dir", required=True, type=Path, help="Directory containing upstream .lsr files")
     parser.add_argument("--output-dir", required=True, type=Path, help="Directory to write .json and .srs artifacts")
-    parser.add_argument("--sing-box", required=True, type=Path, help="Path to the sing-box binary")
+    parser.add_argument("--srs-compiler", required=True, type=Path, help="Path to the built-in SRS compiler")
     parser.add_argument("--manifest-name", default=DEFAULT_MANIFEST_NAME, help="Manifest file used to track generated artifacts")
     parser.add_argument("--clean", action="store_true", help="Remove previously generated artifacts before writing new ones")
     return parser
@@ -466,7 +464,7 @@ def main() -> int:
     result = generate_rule_artifacts(
         source_dir=args.source_dir,
         output_dir=args.output_dir,
-        sing_box_binary=args.sing_box,
+        srs_compiler=args.srs_compiler,
         manifest_name=args.manifest_name,
         clean=args.clean,
     )
