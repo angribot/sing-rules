@@ -28,7 +28,7 @@ jobs:
           python-version: '3.14'
 
       - name: Cache sing-box archive
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/sing-box/${{ env.SING_BOX_VERSION }}
           key: sing-box-linux-amd64-${{ env.SING_BOX_VERSION }}-${{ env.SING_BOX_LINUX_AMD64_SHA256 }}
