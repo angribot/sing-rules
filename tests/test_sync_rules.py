@@ -5,12 +5,11 @@ import tempfile
 import textwrap
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 from tools.sync_rules import (
     ConversionError,
     convert_lsr_content,
-    main,
+    generate_rule_artifacts,
     to_snake_case,
 )
 
@@ -263,40 +262,31 @@ class GenerateRuleArtifactsTests(unittest.TestCase):
             (output_dir / "stale.json").write_text("old", encoding="utf-8")
             (output_dir / "stale.srs").write_text("old", encoding="utf-8")
 
-            fake_srs_compiler = output_dir / "fake-srs-compiler"
-            fake_srs_compiler.write_text(
+            fake_sing_box = output_dir / "fake-sing-box"
+            fake_sing_box.write_text(
                 textwrap.dedent(
                     """
                     #!/usr/bin/env python3
                     import pathlib
                     import sys
 
-                    if len(sys.argv) != 4 or sys.argv[1] != '--output':
-                        raise SystemExit(f'unexpected arguments: {sys.argv[1:]}')
-                    output_path = pathlib.Path(sys.argv[2])
-                    json_path = pathlib.Path(sys.argv[3])
+                    json_path = pathlib.Path(sys.argv[-1])
+                    output_path = pathlib.Path(sys.argv[sys.argv.index('--output') + 1])
                     output_path.write_text('compiled:' + json_path.read_text(), encoding='utf-8')
                     """
                 ).strip()
                 + "\n",
                 encoding="utf-8",
             )
-            fake_srs_compiler.chmod(fake_srs_compiler.stat().st_mode | stat.S_IEXEC)
+            fake_sing_box.chmod(fake_sing_box.stat().st_mode | stat.S_IEXEC)
 
-            with patch(
-                "sys.argv",
-                [
-                    "sync_rules",
-                    "--source-dir",
-                    str(source_dir),
-                    "--output-dir",
-                    str(output_dir),
-                    "--srs-compiler",
-                    str(fake_srs_compiler),
-                    "--clean",
-                ],
-            ):
-                self.assertEqual(main(), 0)
+            result = generate_rule_artifacts(
+                source_dir=source_dir,
+                output_dir=output_dir,
+                sing_box_binary=fake_sing_box,
+                manifest_name=".generated-files.txt",
+                clean=True,
+            )
 
             demo_json = (output_dir / "demo_rule.json").resolve()
             demo_srs = (output_dir / "demo_rule.srs").resolve()
@@ -311,6 +301,7 @@ class GenerateRuleArtifactsTests(unittest.TestCase):
             self.assertFalse((output_dir / "stale.json").exists())
             self.assertFalse((output_dir / "stale.srs").exists())
             self.assertEqual(manifest.read_text(encoding="utf-8").splitlines(), ["demo_rule.json", "demo_rule.srs"])
+            self.assertEqual(result.generated_files, [demo_json, demo_srs])
 
 
 if __name__ == "__main__":
