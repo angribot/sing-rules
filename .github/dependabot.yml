@@ -14,17 +14,3 @@ updates:
     labels:
       - dependencies
       - github-actions
-
-  - package-ecosystem: gomod
-    directory: /tools/srs-compile
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: Asia/Shanghai
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: chore
-      include: scope
-    labels:
-      - dependencies
