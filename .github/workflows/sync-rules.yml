@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 env:
-  SING_BOX_VERSION: '1.13.16'
-  SING_BOX_LINUX_AMD64_SHA256: 'e37c312859dfa84cba148f41072ff6369f08361ae91d622dc1fd3aab49611a8d'
+  SING_BOX_VERSION: '1.14.0'
+  SING_BOX_LINUX_AMD64_SHA256: '2375de6999f4f56ab46b4fc5ddf26a6aba1d3e61a0f4e7ddec2f4690457d5f63'
 
 jobs:
   sync:
