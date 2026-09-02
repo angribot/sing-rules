@@ -1,0 +1,161 @@
+{
+  "version": 3,
+  "rules": [
+    {
+      "domain": [
+        "ai-gateway.vercel.sh",
+        "ai.google.dev",
+        "aicode.googleapis.com",
+        "aida.googleapis.com",
+        "aiplatform.googleapis.com",
+        "aisandbox-pa.googleapis.com",
+        "aistudio.google.com",
+        "alkalicore-pa.clients6.google.com",
+        "alkalimakersuite-pa.clients6.google.com",
+        "api.githubcopilot.com",
+        "api.hyperbolic.xyz",
+        "api.x.ai",
+        "apple-relay.apple.com",
+        "apple-relay.cloudflare.com",
+        "apple-relay.fastly-edge.com",
+        "bard.google.com",
+        "challenges.cloudflare.com",
+        "chat.mistral.ai",
+        "chatgpt.livekit.cloud",
+        "console.mistral.ai",
+        "copilot-proxy.githubusercontent.com",
+        "copilot.microsoft.com",
+        "daily-cloudcode-pa.googleapis.com",
+        "daily-cloudcode-pa.sandbox.googleapis.com",
+        "deepmind.com",
+        "deepmind.google",
+        "geller-pa.googleapis.com",
+        "gemini.google",
+        "gemini.google.com",
+        "generativeai.google",
+        "generativelanguage.googleapis.com",
+        "gspe1-ssl.ls.apple.com",
+        "guzzoni.smoot.apple.com",
+        "host.livekit.cloud",
+        "imagine.meta.com",
+        "integrate.api.nvidia.com",
+        "jules.google",
+        "jules.google.com",
+        "labs.google",
+        "makersuite.google.com",
+        "models.inference.ai.azure.com",
+        "notebooklm.google",
+        "notebooklm.google.com",
+        "openai.com.cdn.cloudflare.net",
+        "openaiapi-site.azureedge.net",
+        "openaicom.imgix.net",
+        "openaicomproductionae4b.blob.core.windows.net",
+        "opencode.ai",
+        "pplx-res.cloudinary.com",
+        "proactivebackend-pa.googleapis.com",
+        "prodregistryv2.org",
+        "production-openaicom-storage.azureedge.net",
+        "robinfrontend-pa.googleapis.com",
+        "router.huggingface.co",
+        "sydney.bing.com",
+        "token-plan-ams.xiaomimimo.com",
+        "token-plan-sgp.xiaomimimo.com",
+        "trae-api-sg.mchost.guru",
+        "turn.livekit.cloud",
+        "webchannel-alkalimakersuite-pa.clients6.google.com"
+      ],
+      "domain_suffix": [
+        "agnes-ai.com",
+        "anthropic.com",
+        "antigravity-unleash.goog",
+        "antigravity.google",
+        "cerebras.ai",
+        "chat.com",
+        "chatgpt.com",
+        "chatgpt.site",
+        "claude.ai",
+        "claudeusercontent.com",
+        "crixet.com",
+        "fireworks.ai",
+        "grazie.ai",
+        "grazie.aws.intellij.net",
+        "grok.com",
+        "groq.com",
+        "hyperbolic.ai",
+        "jetbrains.ai",
+        "jina.ai",
+        "kiro.dev",
+        "meta.ai",
+        "minimax.io",
+        "mistral.ai",
+        "oaistatic.com",
+        "oaiusercontent.com",
+        "openai.com",
+        "openrouter.ai",
+        "perplexity.ai",
+        "perplexity.com",
+        "poe.com",
+        "pplx.ai",
+        "sora.com",
+        "together.ai",
+        "tokenflux.ai",
+        "trae.ai",
+        "voyageai.com",
+        "x.ai",
+        "z.ai"
+      ],
+      "ip_cidr": [
+        "160.79.104.0/23",
+        "2607:6bc0::/48"
+      ]
+    },
+    {
+      "type": "logical",
+      "mode": "and",
+      "rules": [
+        {
+          "domain_suffix": [
+            "azurefd.net"
+          ]
+        },
+        {
+          "domain_keyword": [
+            "openaicom-api-"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "logical",
+      "mode": "and",
+      "rules": [
+        {
+          "domain_suffix": [
+            "run.app"
+          ]
+        },
+        {
+          "domain_keyword": [
+            "antigravity-auto-updater-"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "logical",
+      "mode": "and",
+      "rules": [
+        {
+          "domain_suffix": [
+            "webpubsub.azure.com"
+          ]
+        },
+        {
+          "domain_keyword": [
+            "chatgpt-async-webps-prod-"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "rules": [
+    {
+      "domain": [
+        "gocart-web-prod-ue1-alb-1461435473.us-east-1.elb.amazonaws.com",
+        "prod.adobegenuine.com"
+      ],
+      "domain_suffix": [
+        "adobe.io",
+        "adobestats.io"
+      ]
+    }
+  ]
+}
